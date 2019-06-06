@@ -1,4 +1,4 @@
-use srvr::NetstringCodec;
+use netstring_codec_tokio_example::NetstringCodec;
 use tokio;
 use tokio::codec::Framed;
 use tokio::io;
