@@ -1,0 +1,22 @@
+[package]
+name = "netstring_codec_tokio_example"
+version = "0.1.0"
+authors = ["Cedric Hutchings <cedhut02@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = "0.1.21"
+simple_logger = "1.2.0"
+log = "0.4.6"
+futures = "0.1.20"
+bytes = "0.4"
+
+[[example]]
+name = "client"
+crate-type = ["bin"]
+
+[[example]]
+name = "server"
+crate-type = ["bin"]
