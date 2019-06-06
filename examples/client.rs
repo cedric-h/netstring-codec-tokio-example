@@ -1,5 +1,3 @@
-use netstring_codec_tokio_example::NetstringCodec;
-
 use std::env;
 use std::io::{self, Write};
 use std::net::SocketAddr;
@@ -39,6 +37,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
 
 
 mod tcp {
+    use netstring_codec_tokio_example::NetstringCodec;
 
     use tokio;
     use tokio::net::TcpStream;
