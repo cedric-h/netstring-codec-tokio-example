@@ -1,10 +1,11 @@
+use netstring_codec_tokio_example::Message;
 use std::env;
 use std::io::{self, Write};
 use std::net::SocketAddr;
 use std::thread;
 
-use tokio::prelude::*;
 use futures::sync::mpsc;
+use tokio::prelude::*;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let mut args = env::args();
@@ -25,40 +26,38 @@ fn main() -> Result<(), Box<std::error::Error>> {
 
     tokio::run({
         stdout
-            .for_each(move |chunk| {
-                out.write_all(&chunk)
-            })
-        .map_err(|e| println!("error reading stdout; error = {:?}", e))
+            .for_each(move |chunk| out.write_all(&chunk))
+            .map_err(|e| println!("error reading stdout; error = {:?}", e))
     });
 
     Ok(())
 }
 
-
-
 mod tcp {
-    use netstring_codec_tokio_example::NetstringCodec;
+    use netstring_codec_tokio_example::{Message, NetstringCodec};
 
     use tokio;
+    use tokio::codec::{Decoder, Framed};
     use tokio::net::TcpStream;
     use tokio::prelude::*;
-    use tokio::codec::{Framed, Decoder};
 
     //use bytes::BytesMut;
     use std::error::Error;
     use std::io;
     use std::net::SocketAddr;
 
-    pub fn connect(addr: &SocketAddr,
-                   stdin: Box<Stream<Item = Vec<u8>, Error = io::Error> + Send>)
-        -> Result<Box<Stream<Item = Vec<u8>, Error = io::Error> + Send>, Box<Error>>
-        {
+    pub fn connect(
+        addr: &SocketAddr,
+        stdin: Box<Stream<Item = Vec<u8>, Error = io::Error> + Send>,
+    ) -> Result<Box<Stream<Item = Vec<u8>, Error = io::Error> + Send>, Box<Error>>
+    {
+        let tcp = TcpStream::connect(addr);
 
-            let tcp = TcpStream::connect(addr);
-
-            let stream = Box::new(tcp.map(move |stream| {
+        let stream = Box::new(
+            tcp.map(move |stream| {
                 // magiiic
-                let (sink, stream) = Framed::new(stream, NetstringCodec::new(255, true)).split();
+                let (sink, stream) =
+                    Framed::new(stream, NetstringCodec::new(255, false)).split();
 
                 tokio::spawn(stdin.forward(sink).then(|result| {
                     if let Err(e) = result {
@@ -68,24 +67,35 @@ mod tcp {
                 }));
 
                 stream
-            }).flatten_stream());
+            })
+            .flatten_stream(),
+        );
 
-            Ok(stream)
-        }
+        Ok(stream)
+    }
 
 }
 
 fn read_stdin(mut tx: mpsc::Sender<Vec<u8>>) {
     let mut stdin = io::stdin();
 
-
     loop {
-        let buf: Vec<u8> = vec![2, 14, 42];
-        tx = match tx.send(buf).wait() {
+        //get input
+        let mut buf = vec![0; 1024];
+        let n = match stdin.read(&mut buf) {
+            Err(_) | Ok(0) => break,
+            Ok(n) => n,
+        };
+        buf.truncate(n);
+
+        let mut input = Message {
+            x: 42.0,
+            msg: String::from_utf8(buf).unwrap(),
+        };
+
+        tx = match tx.send(input.pack()).wait() {
             Ok(tx) => tx,
             Err(_) => break,
         };
-
-        thread::sleep(std::time::Duration::from_secs(1));
     }
 }

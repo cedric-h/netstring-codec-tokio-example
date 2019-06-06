@@ -3,6 +3,9 @@ use bytes::{BytesMut};
 use tokio::codec::{Decoder, Encoder};
 use tokio::io;
 
+mod message;
+pub use message::*;
+
 /// Netstring is an easy way to frame data on TCP.
 /// http://cr.yp.to/proto/netstrings.txt
 pub struct NetstringCodec {

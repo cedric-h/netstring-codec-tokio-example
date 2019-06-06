@@ -1,4 +1,4 @@
-use netstring_codec_tokio_example::NetstringCodec;
+use netstring_codec_tokio_example::{NetstringCodec, Message};
 use tokio;
 use tokio::codec::Framed;
 use tokio::io;
@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
 fn process(socket: TcpStream) {
     // transform our stream of bytes to stream of frames.
     // This is where the magic happens
-    let framed_sock = Framed::new(socket, NetstringCodec::new(123, true));
+    let framed_sock = Framed::new(socket, NetstringCodec::new(323, true));
 
     let connection = Peer::new(framed_sock).map_err(|e| {
         println!("connection error = {:?}", e);
@@ -56,8 +56,9 @@ impl Future for Peer {
         while let Async::Ready(line) = self.socket.poll()? {
             match line {
                 Some(d) => {
-                    dbg!(d);
-                }
+                    let msg = Message::unpack(d).unwrap(); // This is a Result
+                    dbg!(msg);
+                },
                 // eol/something bad happend in decoding -> disconnect.
                 None => return Ok(Async::Ready(())),
             }
