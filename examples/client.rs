@@ -93,7 +93,7 @@ fn read_stdin(mut tx: mpsc::Sender<Vec<u8>>) {
             msg: String::from_utf8(buf).unwrap(),
         };
 
-        tx = match tx.send(input.pack()).wait() {
+        tx = match tx.send(input.pack().unwrap()).wait() {
             Ok(tx) => tx,
             Err(_) => break,
         };

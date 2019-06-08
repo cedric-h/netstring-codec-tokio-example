@@ -1,4 +1,4 @@
-use netstring_codec_tokio_example::{NetstringCodec, Message};
+use netstring_codec_tokio_example::{Message, NetstringCodec};
 use tokio;
 use tokio::codec::Framed;
 use tokio::io;
@@ -15,10 +15,10 @@ fn main() -> Result<(), Box<std::error::Error>> {
             Ok(())
         })
         .map_err(|err| {
-            println!("accept error = {:?}", err);
+            println!("accept error = {}", err);
         });
 
-    println!("Running on localhost:6142");
+    println!("Running on localhost:8082");
     tokio::run(server);
 
     Ok(())
@@ -28,11 +28,12 @@ fn main() -> Result<(), Box<std::error::Error>> {
 fn process(socket: TcpStream) {
     // transform our stream of bytes to stream of frames.
     // This is where the magic happens
-    let framed_sock = Framed::new(socket, NetstringCodec::new(323, true));
+    let mut framed_sock = Framed::new(socket, NetstringCodec::new(323, true));
 
     let connection = Peer::new(framed_sock).map_err(|e| {
-        println!("connection error = {:?}", e);
+        println!("connection error = {}", e);
     });
+
     // spawn the task. Internally, this submits the task to a thread pool
     tokio::spawn(connection);
 }
@@ -57,8 +58,18 @@ impl Future for Peer {
             match line {
                 Some(d) => {
                     let msg = Message::unpack(d).unwrap(); // This is a Result
+                    self.socket.start_send(
+                        Message {
+                            x: msg.x.clone(),
+                            msg: "The server is responding to your message! \
+                                Here's the number you sent!".to_owned(),
+                        }
+                        .pack()
+                        .unwrap(),
+                    );
+                    self.socket.poll_complete();
                     dbg!(msg);
-                },
+                }
                 // eol/something bad happend in decoding -> disconnect.
                 None => return Ok(Async::Ready(())),
             }

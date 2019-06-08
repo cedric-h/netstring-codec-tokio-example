@@ -15,6 +15,7 @@ bytes = "0.4"
 serde = "1.0.92"
 rmp-serde = "0.13.7"
 serde_derive = "1.0.92"
+rand = "0.6.5"
 
 [[example]]
 name = "client"
@@ -22,4 +23,12 @@ crate-type = ["bin"]
 
 [[example]]
 name = "server"
+crate-type = ["bin"]
+
+[[example]]
+name = "send_and_recv_client"
+crate-type = ["bin"]
+
+[[example]]
+name = "send_and_recv_server"
 crate-type = ["bin"]

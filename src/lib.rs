@@ -5,6 +5,8 @@ use tokio::io;
 
 mod message;
 pub use message::*;
+mod shared_dequeue;
+pub use shared_dequeue::*;
 
 /// Netstring is an easy way to frame data on TCP.
 /// http://cr.yp.to/proto/netstrings.txt
